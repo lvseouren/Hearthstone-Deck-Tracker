@@ -148,6 +148,8 @@ namespace Hearthstone_Deck_Tracker
 			   && _game.CurrentGameStats.ReplayFile == null && RecordCurrentGameMode)
 				_game.CurrentGameStats.ReplayFile = ReplayMaker.SaveToDisk(_game.PowerLog);
 
+			HsReplay.UploadPowerLog(_game.PowerLog);
+
 			SaveAndUpdateStats();
 
 			if(_arenaRewardDialog != null)
