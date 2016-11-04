@@ -4,9 +4,11 @@ using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Hearthstone_Deck_Tracker.FlyoutControls.Options;
 using Hearthstone_Deck_Tracker.FlyoutControls.Options.Overlay;
 using Hearthstone_Deck_Tracker.FlyoutControls.Options.Tracker;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Utility.Logging;
 
 #endregion
 
@@ -33,6 +35,7 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 		public readonly TrackerPlugins OptionsTrackerPlugins = new TrackerPlugins();
 		public readonly TrackerSettings OptionsTrackerSettings = new TrackerSettings();
 		public readonly TrackerStats OptionsTrackerStats = new TrackerStats();
+		public readonly OptionsSearch OptionsSearch = new OptionsSearch();
 
 		public OptionsMain()
 		{
@@ -42,11 +45,11 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 			{
 				foreach(var treeItem in TreeViewOptions.Items.Cast<TreeViewItem>())
 					treeItem.ExpandSubtree();
-				TreeViewOptions.Items.Cast<TreeViewItem>().First().Items.Cast<TreeViewItem>().First().IsSelected = true;
+				TreeViewOptions.Items.Cast<TreeViewItem>().ToArray()[1].Items.Cast<TreeViewItem>().First().IsSelected = true;
 			}
-			catch(Exception e)
+			catch(Exception ex)
 			{
-				Logger.WriteLine(e.ToString(), "Options");
+				Log.Error(ex);
 			}
 		}
 
@@ -67,7 +70,6 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 			OptionsTrackerAppearance.Load();
 			OptionsTrackerBackups.Load();
 			OptionsTrackerNotifications.Load();
-			//OptionsTrackerPlugins.Load(); - load in main after loading plugins
 		}
 
 		private void TreeViewItemGeneralOverlay_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsOverlayGeneral;
@@ -86,5 +88,6 @@ namespace Hearthstone_Deck_Tracker.FlyoutControls
 		private void TreeViewItemTrackerBackups_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsTrackerBackups;
 		private void TreeViewItemTrackerHotKeys_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsTrackerHotKeys;
 		private void TreeViewItemTrackerNotifications_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsTrackerNotifications;
+		private void TreeViewItemSearch_OnSelected(object sender, RoutedEventArgs e) => ContentControlOptions.Content = OptionsSearch;
 	}
 }

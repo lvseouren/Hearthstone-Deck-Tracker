@@ -13,6 +13,7 @@ using Hearthstone_Deck_Tracker.Plugins;
 using Hearthstone_Deck_Tracker.Utility;
 using Hearthstone_Deck_Tracker.Utility.Extensions;
 using Hearthstone_Deck_Tracker.Utility.HotKeys;
+using Hearthstone_Deck_Tracker.Utility.Logging;
 using Hearthstone_Deck_Tracker.Windows;
 using MahApps.Metro.Controls.Dialogs;
 
@@ -46,8 +47,8 @@ namespace Hearthstone_Deck_Tracker
 			Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 			var newUser = !Directory.Exists(Config.AppDataPath);
 			Config.Load();
+			Log.Initialize();
 			ConfigManager.Run();
-			Logger.Initialize();
 			Helper.UpdateAppTheme();
 			var splashScreenWindow = new SplashScreenWindow();
 			splashScreenWindow.ShowConditional();
@@ -92,7 +93,9 @@ namespace Hearthstone_Deck_Tracker
 
 			if(Helper.HearthstoneDirExists)
 			{
-				if(Helper.UpdateLogConfig && Game.IsRunning)
+				if(ConfigManager.LogConfigUpdateFailed)
+					MainWindow.ShowLogConfigUpdateFailedMessage().Forget();
+				else if(ConfigManager.LogConfigUpdated && Game.IsRunning)
 				{
 					MainWindow.ShowMessageAsync("Restart Hearthstone",
 					                            "This is either your first time starting HDT or the log.config file has been updated. Please restart Hearthstone, for HDT to work properly.");
@@ -143,7 +146,10 @@ namespace Hearthstone_Deck_Tracker
 						//game started
 						Game.CurrentRegion = Helper.GetCurrentRegion();
 						if(Game.CurrentRegion != Region.UNKNOWN)
+						{
 							BackupManager.Run();
+							Game.MetaData.HearthstoneBuild = null;
+						}
 					}
 					Overlay.UpdatePosition();
 
@@ -191,9 +197,9 @@ namespace Hearthstone_Deck_Tracker
 					if(Game.IsRunning)
 					{
 						//game was closed
-						Logger.WriteLine("Exited game", "UpdateOverlayLoop");
+						Log.Info("Exited game");
 						Game.CurrentRegion = Region.UNKNOWN;
-						Logger.WriteLine("Reset region", "UpdateOverlayLoop");
+						Log.Info("Reset region");
 						await Reset();
 						Game.IsInMenu = true;
 

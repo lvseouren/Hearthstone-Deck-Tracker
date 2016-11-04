@@ -3,8 +3,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
+using Hearthstone_Deck_Tracker.Utility.Logging;
 using Hearthstone_Deck_Tracker.Windows;
 using MahApps.Metro.Controls.Dialogs;
 
@@ -27,12 +29,12 @@ namespace Hearthstone_Deck_Tracker.Utility
 					return;
 			}
 			_lastUpdateCheck = DateTime.Now;
-			var newVersion = await Helper.CheckForUpdates(false);
+			var newVersion = await GetLatestVersion(false);
 			if(newVersion != null)
 				ShowNewUpdateMessage(newVersion, false);
 			else if(Config.Instance.CheckForBetaUpdates)
 			{
-				newVersion = await Helper.CheckForUpdates(true);
+				newVersion = await GetLatestVersion(true);
 				if(newVersion != null)
 					ShowNewUpdateMessage(newVersion, true);
 			}
@@ -69,7 +71,7 @@ namespace Hearthstone_Deck_Tracker.Utility
 					//recheck, in case there was no immediate response to the dialog
 					if((DateTime.Now - _lastUpdateCheck) > new TimeSpan(0, 10, 0))
 					{
-						newVersion = await Helper.CheckForUpdates(beta);
+						newVersion = await GetLatestVersion(beta);
 						if(newVersion != null)
 							newVersionString = $"{newVersion.Major}.{newVersion.Minor}.{newVersion.Build}";
 					}
@@ -79,10 +81,10 @@ namespace Hearthstone_Deck_Tracker.Utility
 						Core.MainWindow.Close();
 						Application.Current.Shutdown();
 					}
-					catch
+					catch(Exception ex)
 					{
-						Logger.WriteLine("Error starting updater");
-						Process.Start(releaseDownloadUrl);
+						Log.Error("Error starting updater\n" + ex);
+						Helper.TryOpenUrl(releaseDownloadUrl);
 					}
 				}
 				else
@@ -93,7 +95,7 @@ namespace Hearthstone_Deck_Tracker.Utility
 			catch(Exception e)
 			{
 				_showingUpdateMessage = false;
-				Logger.WriteLine("Error showing new update message\n" + e.Message);
+				Log.Error("Error showing new update message\n" + e);
 			}
 		}
 
@@ -110,7 +112,7 @@ namespace Hearthstone_Deck_Tracker.Utility
 			}
 			catch(Exception e)
 			{
-				Logger.WriteLine("Error updating updater\n" + e);
+				Log.Error("Error updating updater\n" + e);
 			}
 			try
 			{
@@ -120,8 +122,34 @@ namespace Hearthstone_Deck_Tracker.Utility
 			}
 			catch(Exception e)
 			{
-				Logger.WriteLine("Error deleting Updater.exe\n" + e);
+				Log.Error("Error deleting Updater.exe\n" + e);
 			}
+		}
+
+		public static async Task<Version> GetLatestVersion(bool beta)
+		{
+			var betaString = beta ? "beta" : "live";
+			var currentVersion = Helper.GetCurrentVersion();
+			if(currentVersion == null)
+				return null;
+			Log.Info($"Checking for {betaString} updates... (current: {currentVersion})");
+			try
+			{
+				string xml;
+				using(var wc = new WebClient())
+					xml = await wc.DownloadStringTaskAsync($"https://raw.githubusercontent.com/Epix37/HDT-Data/master/{betaString}-version");
+
+				var newVersion = new Version(XmlManager<SerializableVersion>.LoadFromString(xml).ToString());
+				Log.Info("Latest " + betaString + " version: " + newVersion);
+
+				if(newVersion > currentVersion)
+					return newVersion;
+			}
+			catch(Exception e)
+			{
+				Log.Error(e);
+			}
+			return null;
 		}
 	}
 }

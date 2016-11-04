@@ -18,6 +18,7 @@ using Hearthstone_Deck_Tracker.Annotations;
 using Hearthstone_Deck_Tracker.Controls.DeckPicker.DeckPickerItemLayouts;
 using Hearthstone_Deck_Tracker.Enums;
 using Hearthstone_Deck_Tracker.Hearthstone;
+using Hearthstone_Deck_Tracker.Utility.Logging;
 using static System.ComponentModel.ListSortDirection;
 using static System.Windows.Visibility;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
@@ -477,18 +478,18 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 					if(missingTags.Any())
 					{
 						Config.Instance.SelectedTags.AddRange(missingTags);
-						Logger.WriteLine("Added missing tags so the deck shows up: " + missingTags.Aggregate((c, n) => c + ", " + n));
+						Log.Info("Added missing tags so the deck shows up: " + missingTags.Aggregate((c, n) => c + ", " + n));
 					}
 					else
 					{
 						Config.Instance.SelectedTags.Add("None");
-						Logger.WriteLine("Added missing tags so the deck shows up: None");
+						Log.Info("Added missing tags so the deck shows up: None");
 					}
 				}
 				else
 				{
 					Config.Instance.SelectedTags = new List<string> {"All"};
-					Logger.WriteLine("Set tags to ALL so the deck shows up");
+					Log.Info("Set tags to ALL so the deck shows up");
 				}
 				Config.Save();
 				Core.MainWindow.SortFilterDecksFlyout.SetSelectedTags(Config.Instance.SelectedTags);
@@ -573,27 +574,27 @@ namespace Hearthstone_Deck_Tracker.Controls.DeckPicker
 		{
 			if(_ignoreSelectionChange)
 				return;
-			if(e.AddedItems.Count == 0)
-				Config.Instance.SelectedDeckType = DeckType.All;
-			else
+			var deckType = DeckType.All;
+			if(e.AddedItems.Count >= 0)
 			{
 				var item = e.AddedItems[0] as string;
 				if(item != null)
 				{
 					switch(item)
 					{
-						case "ALL":
-							Config.Instance.SelectedDeckType = DeckType.All;
-							break;
 						case "ARENA":
-							Config.Instance.SelectedDeckType = DeckType.Arena;
+							deckType = DeckType.Arena;
 							break;
 						case "CONSTRUCTED":
-							Config.Instance.SelectedDeckType = DeckType.Constructed;
+							deckType = DeckType.Constructed;
 							break;
 					}
 				}
-				Config.Save();
+				if(Config.Instance.SelectedDeckType != deckType)
+				{
+					Config.Instance.SelectedDeckType = deckType;
+					Config.Save();
+				}
 				UpdateDecks();
 			}
 		}

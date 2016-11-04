@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using System.Windows.Media.Imaging;
 using Hearthstone_Deck_Tracker.Exporting;
 using Hearthstone_Deck_Tracker.Utility.Extensions;
+using Hearthstone_Deck_Tracker.Utility.Logging;
 using MahApps.Metro.Controls.Dialogs;
 using Clipboard = System.Windows.Clipboard;
 
@@ -182,10 +183,10 @@ namespace Hearthstone_Deck_Tracker.Utility.HotKeys
 			if(handle == IntPtr.Zero)
 				return;
 			var rect = User32.GetHearthstoneRect(false);
-			var bmp = await Helper.CaptureHearthstoneAsync(new Point(0, 0), rect.Width, rect.Height, handle, false, false);
+			var bmp = await ScreenCapture.CaptureHearthstoneAsync(new Point(0, 0), rect.Width, rect.Height, handle, false, false);
 			if(bmp == null)
 			{
-				Logger.WriteLine("There was an error capturing hearthstone.", "Screenshot-Action");
+				Log.Error("There was an error capturing hearthstone.");
 				return;
 			}
 			using(var mem = new MemoryStream())
@@ -207,10 +208,10 @@ namespace Hearthstone_Deck_Tracker.Utility.HotKeys
 			if(handle == IntPtr.Zero)
 				return;
 			var rect = User32.GetHearthstoneRect(false);
-			var bmp = await Helper.CaptureHearthstoneAsync(new Point(0, 0), rect.Width, rect.Height, handle, false, true);
+			var bmp = await ScreenCapture.CaptureHearthstoneAsync(new Point(0, 0), rect.Width, rect.Height, handle, false, true);
 			if(bmp == null)
 			{
-				Logger.WriteLine("There was an error capturing hearthstone.", "GameScreenshot-Action");
+				Log.Error("There was an error capturing hearthstone.");
 				return;
 			}
 			using(var mem = new MemoryStream())
